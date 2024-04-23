@@ -2,6 +2,7 @@ import { useState } from "react";
 
 type Todo = {
   value: string;
+  readonly id: number;
 };
 
 export const App = () => {
@@ -13,6 +14,7 @@ export const App = () => {
 
     const newTodo: Todo = {
       value: text,
+      id: new Date().getTime(),
     };
 
     setTodos((todos) => [newTodo, ...todos]);
@@ -34,7 +36,19 @@ export const App = () => {
         <input type="text" value={text} onChange={(e) => handleChange(e)} />
         <input type="submit" value="追加" onSubmit={handleSubmit} />
       </form>
-      <p>{text}</p>
+      <ul>
+        {todos.map((todo) => {
+          return (
+            <li key={todo.id}>
+              <input
+                type="text"
+                value={todo.value}
+                onChange={(e) => e.preventDefault()}
+              />
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 };
