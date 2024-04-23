@@ -25,6 +25,22 @@ export const App = () => {
     setText(e.target.value);
   };
 
+  const handleEdit = (id: number, value: string) => {
+    setTodos((todos) => {
+      const newTodos = todos.map((todo) => {
+        if (todo.id === id) {
+					/**
+					 * map関数で新しい配列を返すが、オブジェクト内の値は元の値を参照するため、イミュータビリティが保たれていない。
+					 * そのため、スプレッド構文でコピーを作成し、新しい値を代入する。
+					 */
+          return { ...todo, value };
+        }
+        return todo;
+      });
+      return newTodos;
+    });
+  };
+
   return (
     <div>
       <form
@@ -43,7 +59,7 @@ export const App = () => {
               <input
                 type="text"
                 value={todo.value}
-                onChange={(e) => e.preventDefault()}
+                onChange={(e) => handleEdit(todo.id, e.target.value)}
               />
             </li>
           );
