@@ -1,13 +1,6 @@
-import { useState } from "react";
-
-type Todo = {
-  value: string;
-  readonly id: number;
-  checked: boolean;
-  removed: boolean;
-};
-
-type Filter = "all" | "checked" | "unchecked" | "removed";
+import localforage from "localforage";
+import { useEffect, useState } from "react";
+import { isTodos } from "./lib/isTodo";
 
 export const App = () => {
   const [text, setText] = useState("");
@@ -32,47 +25,6 @@ export const App = () => {
     setText(e.target.value);
   };
 
-  const handleEdit = (id: number, value: string) => {
-    setTodos((todos) => {
-      const newTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          /**
-           * map関数で新しい配列を返すが、オブジェクト内の値は元の値を参照するため、イミュータビリティが保たれていない。
-           * そのため、スプレッド構文でコピーを作成し、新しい値を代入する。
-           */
-          return { ...todo, value };
-        }
-        return todo;
-      });
-      return newTodos;
-    });
-  };
-
-  const handleCheck = (id: number, checked: boolean) => {
-    setTodos((todos) => {
-      const newTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          return { ...todo, checked };
-        }
-        return todo;
-      });
-      return newTodos;
-    });
-  };
-
-  const handleRemove = (id: number, removed: boolean) => {
-    setTodos((todos) => {
-      const newTodos = todos.map((todo) => {
-        if (todo.id === id) {
-          return { ...todo, removed };
-        }
-
-        return todo;
-      });
-      return newTodos;
-    });
-  };
-
   const handleSort = (filter: Filter) => {
     setFilter(filter);
   };
@@ -95,6 +47,34 @@ export const App = () => {
         return todo;
     }
   });
+
+  const handleTodo = <K extends keyof Todo, V extends Todo[K]>(
+    id: number,
+    key: K,
+    value: V
+  ) => {
+    setTodos((todos) => {
+      const newTodos = todos.map((todo) => {
+        if (todo.id === id) {
+          return { ...todo, [key]: value };
+        } else {
+          return todo;
+        }
+      });
+
+      return newTodos;
+    });
+  };
+
+  useEffect(() => {
+    localforage
+      .getItem("todo-20200101")
+      .then((values) => isTodos(values) && setTodos(values));
+  }, []);
+
+  useEffect(() => {
+    localforage.setItem("todo-20200101", todos);
+  }, [todos]);
 
   return (
     <div>
@@ -135,15 +115,17 @@ export const App = () => {
                 type="checkbox"
                 disabled={todo.removed}
                 checked={todo.checked}
-                onChange={() => handleCheck(todo.id, !todo.checked)}
+                onChange={() => handleTodo(todo.id, "checked", !todo.checked)}
               />
               <input
                 type="text"
                 disabled={todo.checked || todo.removed}
                 value={todo.value}
-                onChange={(e) => handleEdit(todo.id, e.target.value)}
+                onChange={(e) => handleTodo(todo.id, "value", e.target.value)}
               />
-              <button onClick={() => handleRemove(todo.id, !todo.removed)}>
+              <button
+                onClick={() => handleTodo(todo.id, "removed", !todo.removed)}
+              >
                 {todo.removed ? "復元" : "削除"}
               </button>
             </li>
